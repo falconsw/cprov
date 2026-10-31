@@ -1,6 +1,6 @@
 {
   "name": "@falconsw/cprov",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Switch Claude Code between Anthropic, Z.ai (GLM), MiniMax and any Anthropic-compatible provider. Keys live in your OS keychain.",
   "type": "module",
   "bin": {

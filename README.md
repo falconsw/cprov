@@ -37,11 +37,18 @@ Node 18+ and Claude Code are required. No other dependencies.
   - `cprov use <profile>` writes the overlay into `~/.claude/settings.json` (backup in
     `settings.json.cprov-backup`) with an `apiKeyHelper` that reads the key from the keychain,
     so plain `claude` uses it.
+  - `cprov use <profile> --env-key` also keeps the key in `settings.json` env, for apps that only
+    read that file or the session's environment (Leftover, Cost Info, limit dashboards). The choice
+    sticks until `--no-env-key`; `cprov doctor` flags the plain-text copy while it lasts.
 - **Provider catalog.** Base URLs, model names, context sizes and model-picker entries come from
   [`providers.json`](providers.json). For gateways, all model tiers (Opus/Sonnet/Haiku) are mapped
   to the chosen model.
 - **Checked up front.** `cprov add` and `cprov doctor` send a 1-token request so a wrong key,
   empty balance or wrong model name shows up immediately.
+- **Other tools that want the key.** Three documented ways, best first: run the `apiKeyHelper`
+  from `settings.json` (that command is `cprov key <profile>`), read the OS keychain directly
+  (service `cprov`, account = profile name), or turn on `cprov use --env-key` so `settings.json`
+  env carries the key the way a hand-made setup did.
 
 ## Commands
 

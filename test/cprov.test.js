@@ -116,6 +116,37 @@ test('import recognises hand-made settings files and dedupes settings.json', () 
   assert.equal(byName.other.profile.models.length, 2);
 });
 
+test('use --env-key keeps the key in settings.json env until --no-env-key', () => {
+  const { claude, cli } = sandbox();
+  let r = cli(['add', 'zai', '--key-stdin', '--no-verify'], 'zai-secret\n');
+  assert.equal(r.status, 0, r.stderr);
+
+  r = cli(['use', 'glm', '--env-key']);
+  assert.equal(r.status, 0, r.stderr);
+  let settings = JSON.parse(fs.readFileSync(path.join(claude, 'settings.json'), 'utf8'));
+  assert.equal(settings.env.ANTHROPIC_AUTH_TOKEN, 'zai-secret');
+  assert.match(settings.apiKeyHelper, /cprov\.js' key 'glm'$/);
+
+  // The choice sticks: a later plain `use` keeps writing it, so env-reading apps stay working.
+  r = cli(['use', 'glm']);
+  assert.equal(r.status, 0, r.stderr);
+  settings = JSON.parse(fs.readFileSync(path.join(claude, 'settings.json'), 'utf8'));
+  assert.equal(settings.env.ANTHROPIC_AUTH_TOKEN, 'zai-secret');
+
+  // --no-env-key takes it back out; the keychain helper stays.
+  r = cli(['use', 'glm', '--no-env-key']);
+  assert.equal(r.status, 0, r.stderr);
+  settings = JSON.parse(fs.readFileSync(path.join(claude, 'settings.json'), 'utf8'));
+  assert.equal(settings.env.ANTHROPIC_AUTH_TOKEN, undefined);
+  assert.ok(settings.apiKeyHelper);
+
+  // Plain `use` after --no-env-key keeps it out.
+  r = cli(['use', 'glm']);
+  assert.equal(r.status, 0, r.stderr);
+  settings = JSON.parse(fs.readFileSync(path.join(claude, 'settings.json'), 'utf8'));
+  assert.equal(settings.env.ANTHROPIC_AUTH_TOKEN, undefined);
+});
+
 test('end to end: add, ls, run, use, rm', () => {
   const { claude, env, cli } = sandbox();
   fs.writeFileSync(path.join(claude, 'settings.json'), JSON.stringify({ enabledPlugins: { x: true }, env: { MY_VAR: '1' } }));

@@ -37,6 +37,8 @@ Usage
   cprov <profile> [claude args]   start Claude Code with a profile (this session only)
   cprov run <profile> [args]      same as above
   cprov use <profile>             make a profile the default for plain \`claude\`
+    --env-key       also keep the key in settings.json env (apps that read it: Leftover, Cost Info…)
+    --no-env-key    back to keychain-only
   cprov ls                        list profiles
   cprov current                   show the default profile
   cprov rm <profile>              delete a profile and its key
@@ -86,7 +88,7 @@ export async function main(argv) {
     case 'run':
       return run(rest[0], rest.slice(1));
     case 'use':
-      return use(rest[0]);
+      return use(parse(rest));
     case 'ls':
     case 'list':
       return list();
@@ -250,6 +252,8 @@ async function run(name, args) {
 }
 
 function warnAboutGlobalSettings(profile) {
+  // A settings.json key written by our own `use --env-key` is there on purpose.
+  if (readState().envKey) return;
   const settings = readJson(claudeSettingsPath(), {});
   for (const key of ['ANTHROPIC_AUTH_TOKEN', 'ANTHROPIC_API_KEY']) {
     if (settings.env?.[key]) warn(t('warn.settingsKey', { key }));
@@ -257,7 +261,7 @@ function warnAboutGlobalSettings(profile) {
   if (profile.auth === 'subscription' && settings.apiKeyHelper) warn(t('warn.helper', { name: profile.name }));
 }
 
-async function use(name) {
+async function use({ positional: [name], flags = {} }) {
   if (!name) throw new Error(t('err.usage', { usage: 'cprov use <profile>' }));
   const profile = loadProfile(name);
   if (profile.auth === 'key' && !secretStore().get(name)) throw new Error(t('err.noKey', { name }));
@@ -267,11 +271,21 @@ async function use(name) {
   if (fs.existsSync(settingsPath)) fs.copyFileSync(settingsPath, backup);
 
   const state = readState();
+  // Apps that only read ~/.claude/settings.json or the session's environment — Leftover, Cost
+  // Info, limit dashboards — lose the key when `use` keeps it in the keychain alone. `--env-key`
+  // also writes it there; the choice sticks until `--no-env-key` says otherwise.
+  const envKey = flags['env-key'] ? true : flags['no-env-key'] ? false : state.envKey === true;
   const overlay = buildOverlay(profile, { helper: helperCommand(name) });
+  if (envKey && profile.auth === 'key') {
+    // The same channel `run` uses: Anthropic wants x-api-key, compatible gateways a bearer token.
+    overlay.env[resolveProvider(profile).native ? 'ANTHROPIC_API_KEY' : 'ANTHROPIC_AUTH_TOKEN'] =
+      secretStore().get(name);
+  }
   writeJson(settingsPath, mergeIntoSettings(readJson(settingsPath, {}), overlay, state.appliedEnvKeys));
-  writeState({ ...state, active: name, appliedEnvKeys: Object.keys(overlay.env) });
+  writeState({ ...state, active: name, appliedEnvKeys: Object.keys(overlay.env), envKey });
 
   ok(t('use.done', { name, provider: resolveProvider(profile).name, model: profile.model }));
+  if (envKey && profile.auth === 'key') log(c.dim(t('use.envKey')));
   log(c.dim(t('use.note', { backup })));
   if (profile.auth === 'key' && /[\\/]_npx[\\/]/.test(fileURLToPath(import.meta.url))) warn(t('use.npx'));
 }
@@ -354,7 +368,11 @@ async function doctor(only) {
     const env = readJson(file, {}).env || {};
     const key = ['ANTHROPIC_AUTH_TOKEN', 'ANTHROPIC_API_KEY'].find((k) => env[k]);
     if (!key) continue;
-    if (path.basename(file) === 'settings.json') fail(t('doctor.plainKey', { file, key }));
+    if (path.basename(file) === 'settings.json') {
+      // With `use --env-key` the plaintext copy is the user's own choice: say it, don't fail on it.
+      if (readState().envKey) warn(t('doctor.plainKeyCompat', { file, key }));
+      else fail(t('doctor.plainKey', { file, key }));
+    }
     if (fs.statSync(file).mode & 0o044) fail(t('doctor.readable', { file }));
   }
 
