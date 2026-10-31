@@ -20,7 +20,7 @@ $ cprov opus         # another terminal talks to Claude, at the same time
 ## Install
 
 ```sh
-npm install -g cprov
+npm install -g @falconsw/cprov
 ```
 
 Node 18+ and Claude Code are required. No other dependencies.
