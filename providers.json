@@ -1,0 +1,55 @@
+{
+  "version": 1,
+  "defaults": {
+    "env": {
+      "API_TIMEOUT_MS": "3000000",
+      "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1"
+    }
+  },
+  "providers": [
+    {
+      "id": "anthropic",
+      "name": "Anthropic (Claude)",
+      "profileName": "claude",
+      "native": true,
+      "baseUrl": "https://api.anthropic.com",
+      "keyUrl": "https://console.anthropic.com/settings/keys",
+      "models": [
+        { "id": "claude-opus-5-5", "label": "Claude Opus 5.5", "default": true },
+        { "id": "claude-sonnet-5-5", "label": "Claude Sonnet 5.5" },
+        { "id": "claude-haiku-5-5", "label": "Claude Haiku 5.5" }
+      ]
+    },
+    {
+      "id": "zai",
+      "name": "Z.ai (GLM)",
+      "profileName": "glm",
+      "baseUrl": "https://api.z.ai/api/anthropic",
+      "keyUrl": "https://z.ai/manage-apikey/apikey-list",
+      "mapAllTiers": true,
+      "models": [
+        { "id": "glm-5.3-flash[1m]", "label": "GLM-5.3 Flash", "context": "1M", "default": true }
+      ]
+    },
+    {
+      "id": "minimax",
+      "name": "MiniMax",
+      "profileName": "minimax",
+      "baseUrl": "https://api.minimax.io/anthropic",
+      "keyUrl": "https://platform.minimax.io/user-center/basic-information/interface-key",
+      "mapAllTiers": true,
+      "models": [
+        {
+          "id": "MiniMax-M3.1-Flash-Preview[1m]",
+          "label": "MiniMax-M3.1-Flash-Preview",
+          "context": "1M",
+          "default": true,
+          "env": { "CLAUDE_CODE_AUTO_COMPACT_WINDOW": "1000000" }
+        },
+        { "id": "MiniMax-M3[1m]", "label": "MiniMax-M3", "context": "1M" },
+        { "id": "MiniMax-M2.7", "label": "MiniMax-M2.7", "context": "204.8K" },
+        { "id": "MiniMax-M2.7-highspeed", "label": "MiniMax-M2.7-highspeed", "context": "204.8K", "note": "faster inference" }
+      ]
+    }
+  ]
+}

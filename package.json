@@ -1,0 +1,38 @@
+{
+  "name": "cprov",
+  "version": "0.1.0",
+  "description": "Switch Claude Code between Anthropic, Z.ai (GLM), MiniMax and any Anthropic-compatible provider. Keys live in your OS keychain.",
+  "type": "module",
+  "bin": {
+    "cprov": "bin/cprov.js"
+  },
+  "files": [
+    "bin",
+    "src",
+    "providers.json",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "test": "node --test test/*.test.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "keywords": [
+    "claude",
+    "claude-code",
+    "anthropic",
+    "glm",
+    "z.ai",
+    "minimax",
+    "provider",
+    "switch",
+    "cli"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/falconsw/cprov.git"
+  },
+  "license": "MIT"
+}
